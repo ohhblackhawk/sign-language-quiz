@@ -1,0 +1,60 @@
+body {
+    background-color: #555555;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    display: flex;
+    align-items: flex-start; /* Align items at the start (top) of the container */
+    justify-content: center;
+    height: 100vh;
+}
+
+.center {
+    width: 70%;
+    border: 3px solid #333333;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    background-color: #333333;
+    text-align: center;
+    margin-top: 2%;
+}
+
+h2 {
+    color: white;
+}
+
+p {
+    color: #666666;
+}
+
+.menu {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.menu button {
+    padding: 10px 20px;
+    background-color: #3498db; /* Change this color to your desired one */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 0px;
+    margin-right: 2px; /* Adjust margin to bring the buttons closer together in desktop view */
+}
+
+@media (max-width: 768px) {
+    .center {
+        width: 90%;
+        margin-top: 10px;
+    }
+
+    .menu {
+        flex-direction: column; /* Change to column layout */
+        margin-top: 20px; /* Adjust spacing (increase for wider spacing) */
+    }
+}
