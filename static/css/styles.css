@@ -2,24 +2,38 @@ body {
     background-color: #555555;
     margin: 0;
     font-family: Arial, sans-serif;
+    overflow: hidden;
 }
 
 .container {
     display: flex;
-    align-items: flex-start; /* Align items at the start (top) of the container */
+    align-items: flex-start;
     justify-content: center;
-    height: 100vh;
+    /*lasts for 2seconds*/
+    animation: slideUp 2s ease;
+}
+
+/*animation for container*/
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0; /* container starts container at bottom */
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1; /* container ends at top*/
+    }
 }
 
 .center {
-    width: 70%;
-    border: 3px solid #333333;
-    padding: 20px;
+    width: 70vh;
+    padding: 2vh;
     border-radius: 15px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     background-color: #333333;
     text-align: center;
     margin-top: 2%;
+    background: linear-gradient(to bottom, #333333, #555555);
+    border-bottom: none;
 }
 
 h2 {
@@ -27,7 +41,18 @@ h2 {
 }
 
 p {
-    color: #666666;
+    color: white;
+    opacity: 0; /* initially hide the paragraph */
+    animation: fadeIn 0.5s ease 2s forwards; /* fade in the paragraph quickly so can read first */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .menu {
@@ -36,15 +61,19 @@ p {
     margin-top: 20px;
 }
 
+
 .menu button {
-    padding: 10px 20px;
-    background-color: #3498db; /* Change this color to your desired one */
+    padding: 10px 50px;
+    background-color: #3498db;
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     margin-top: 0px;
-    margin-right: 2px; /* Adjust margin to bring the buttons closer together in desktop view */
+    margin-right: 2px;
+    opacity: 0; /*hides the button*/
+    /*fade animation*/
+    animation: fadeIn 3s ease 4s forwards; /* longer fade in animation to give sometime to read */
 }
 
 @media (max-width: 768px) {
@@ -54,7 +83,7 @@ p {
     }
 
     .menu {
-        flex-direction: column; /* Change to column layout */
-        margin-top: 20px; /* Adjust spacing (increase for wider spacing) */
+        flex-direction: column;
+        margin-top: 20px;
     }
 }
