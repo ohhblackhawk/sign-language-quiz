@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Language Tutor</title>
     <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
-</head>
 
 <body>
 
@@ -16,10 +15,12 @@
             <p>Your Personal AI Tutor for Learn Sign Language. Powered by Computer Vision and Machine Learning</p>
             <br>
             <div class="menu">
-                <button>Start</button>
-                <img src="{{ url_for('video_feed') }}" />
+                <div class="select-difficulty">
+                    <a href="{{ url_for('difficulty') }}" class="btn">Start</a>
+                </div>
             </div>
-            <br>
+            <p class="acknowledgement">By pressing start, you are acknowledging and giving permission for the use of your webcam.</p>
+
         </div>
     </div>
 

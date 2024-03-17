@@ -62,7 +62,7 @@ p {
 }
 
 
-.menu button {
+.menu .btn {
     padding: 10px 50px;
     background-color: #3498db;
     color: white;
@@ -71,10 +71,18 @@ p {
     cursor: pointer;
     margin-top: 0px;
     margin-right: 2px;
+    text-decoration:none;
     opacity: 0; /*hides the button*/
     /*fade animation*/
     animation: fadeIn 3s ease 4s forwards; /* longer fade in animation to give sometime to read */
 }
+
+.acknowledgement{
+    animation: fadeIn 3s ease 2s forwards;
+    color: #d1d1d1;
+}
+
+
 
 @media (max-width: 768px) {
     .center {
@@ -87,3 +95,8 @@ p {
         margin-top: 20px;
     }
 }
+
+
+
+/* sss */
+

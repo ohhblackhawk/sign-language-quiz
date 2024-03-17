@@ -7,8 +7,12 @@ import mediapipe as mp
 app = Flask(__name__)
 
 @app.route('/')
-def index():
+def home():
     return render_template('home.html')
+#difficulty
+@app.route('/difficulty')
+def difficulty():
+    return render_template('difficulty.html')
 
 def gen_frames():
     camera = cv2.VideoCapture(0)
