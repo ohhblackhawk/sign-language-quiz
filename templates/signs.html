@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Language Tutor</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/styles1.css">
+</head>
+
+<body>
+    <div class="menu">
+            <a href="{{ url_for('home') }}" class="backbutton" >Back</a>
+    </div>
+
+    <div class="container">
+        <div class="center">
+            <div class="title">
+                <h2>ASL Sings</h2>
+            </div>
+            <div class="animation">Your Personal AI Tutor for Learn Sign Language. Powered by Computer Vision and
+                Machine Learning</div>
+            <br>
+        </div>
+    </div>
+
+    <div class="signcontainer">
+        {% for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' %}
+        <div class="sign">
+            <img src="static/images/{{ letter }}.gif" alt="ASL Sign for {{ letter }}">
+            <div class="signtext"> {{ letter }} </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+</body>
+
+</html>

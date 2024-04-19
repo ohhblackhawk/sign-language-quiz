@@ -5,23 +5,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Language Tutor</title>
-    <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/styles1.css">
 
+    {% for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' %}
+    <link rel="prefetch" href="static/images/{{ letter }}.gif" as="image">
+    {% endfor %}
+</head>
 <body>
-
     <div class="container">
         <div class="center">
-            <h2 style="font-weight: bold;">Learn Sign Language</h2>
-            <p>Your Personal AI Tutor for Learn Sign Language. Powered by Computer Vision and Machine Learning</p>
-            <br>
+            <div class="title"><h2>Learn Sign Language</h2></div>
+                <div class= "menu animation"><p>Your Personal AI Tutor for Learn Sign Language. Powered by Computer Vision and Machine Learning</p></div>
             <div class="menu">
-                <div class="select-difficulty">
-                    <a href="{{ url_for('difficulty') }}" class="btn">Start</a>
-                </div>
+                    <a href="{{ url_for('difficulty') }}" class="button">Start</a>
             </div>
             <p class="acknowledgement">By pressing start, you are acknowledging and giving permission for the use of your webcam.</p>
 
+            <div class="menu">
+                    <a href="{{ url_for('signs') }}" class="button">Learn ASL Signs</a>
+            </div>
         </div>
+
+
+
+
     </div>
 
 </body>
