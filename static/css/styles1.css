@@ -1,0 +1,178 @@
+body {
+    background-color: #555555;
+    margin: 0;
+    overflow: hidden;
+    font-family: Helvetica
+}
+
+.container {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    animation: slidedown 1s ease;
+}
+/*animation for container*/
+@keyframes slidedown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0; /* container starts container at top */
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1; /* container ends at bottom*/
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0; /* container starts container at bottom */
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1; /* container ends at top*/
+    }
+}
+
+@keyframes slideleft {
+    from {
+        transform: transform(-100%);
+        opacity: 0; /* container starts container at bottom */
+    }
+    to {
+        transform: transform(0);
+        opacity: 1; 
+    }
+}
+
+.center {
+    padding: 2vh;
+    text-align: center;
+    margin-top: 1%;
+}
+
+.title {
+    color: white;
+    text-align: center;
+    font-size: 5vh;
+    font-family: Arial, Helvetica, sans-serif;  
+    font-weight: bold;
+}
+
+.animation {
+    color: white;
+/* initially hide the paragraph */
+ animation: slideleft 0.5s ease-in-out forwards;
+     /* fade in the paragraph quickly so can read first */
+}
+
+.menu {
+    display: flex;
+    justify-content: space-around;
+}
+
+.menu .button {
+    padding: 10px 50px;
+    background-color: #282828;
+    font-weight: bold;
+    color: white;
+    border: none;
+    border-radius: 10vh;
+    cursor: pointer;
+    text-decoration:none;
+    animation: slidedown 1s ease; /* longer fade in animation to give sometime to read */
+}
+.menu .button:hover {
+    background-color: #3498db;
+    transform: scale(1.1);
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+  }
+
+
+
+.acknowledgement{
+    color: #d1d1d1;
+}
+
+/* Back button */
+.backbutton {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1;
+}
+
+.backbutton {
+    padding: 10px 50px;
+    background-color: #282828;
+    font-weight: bold;
+    color: white;
+    border: none;
+    border-radius: 10vh;
+    cursor: pointer;
+    text-decoration:none;
+    animation: slideInFromLeft 0.5s ease-out;
+    animation-fill-mode: forwards;
+}
+
+
+
+
+.backbutton:hover {
+    background-color: #3498db;
+    transform: scale(1.1);
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+}
+
+
+@keyframes slideInFromLeft {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+/* Sign */
+ 
+.signcontainer {
+    display:flex;
+    flex-direction: row;
+    justify-content: center;
+    border-color: red;
+    padding: 20px;
+    flex-wrap: wrap;
+    gap:10px;
+    max-height: 100vh;
+    animation: slideUp 2s;
+}
+
+.sign{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: white;
+    width: 100px;
+    height:auto;
+
+}
+
+.signtext{
+    color: black;   
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    text-align: center; 
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.sign img{
+    width: 100%;
+    height: auto;
+
+}
+
+
+.sign:hover {
+    transform: scale(1.3)
+  }
