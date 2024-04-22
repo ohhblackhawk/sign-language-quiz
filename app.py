@@ -1,5 +1,4 @@
 # app.py
-
 from flask import Flask, render_template, request, jsonify, Response, make_response, send_file,redirect, url_for
 import cv2
 import mediapipe as mp 
@@ -37,7 +36,7 @@ def send_image(letter):
 def difficulty():
     return render_template('difficulty.html')
 
-#choose difficulty
+# choose difficulty
 @app.route('/quiz/<difficulty>', methods=['GET'])
 def quiz(difficulty):
     if difficulty == 'easy':
@@ -74,6 +73,32 @@ def add_word():
         custom_word_pool.append(word)
     return redirect(url_for('quiz',difficulty='custom'))
 
+#prediction
+def get_predictions_from_model(landmark_list, cnn_model):
+    #predicts ^-^
+    predictions = cnn_model.predict(landmark_list)
+    predicted_class = np.argmax(predictions)
+    #letters from class
+    alphabetical_label = label_names[predicted_class]
+    return alphabetical_label
+
+#normalise hand landmarks
+def normalise_landmark(hand_landmarks):
+    #relative
+    landmark_list = [[hand_landmarks.landmark[i].x, hand_landmarks.landmark[i].y] for i in range(len(hand_landmarks.landmark))]
+    #flattens list
+    landmark_list = [x for pair in landmark_list for x in pair]
+    #convert to relative coordinates, where origin is first landmark
+    base_x, base_y = landmark_list[0], landmark_list[1]
+    landmark_list = [(x - base_x) for x in landmark_list[::2]] + [(y - base_y) for y in landmark_list[1::2]]
+    #maximum absolute value
+    max_value = max(list(map(abs, landmark_list)))
+    #normalise 
+    landmark_list = [n / max_value for n in landmark_list]
+    #reshape landmarks for model input (same way it was trained)
+    landmark_list = np.array(landmark_list).reshape((1, 42, 1))
+    return landmark_list
+    
 def gen_frames():
     camera = cv2.VideoCapture(0)
     mp_drawing = mp.solutions.drawing_utils
@@ -85,43 +110,20 @@ def gen_frames():
                 break
             else:
                 image = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                image.flags.writeable = False
-                results = hands.process(image)
+                #less blue imaging
                 image.flags.writeable = True
+                results = hands.process(image)
                 image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
                 if results.multi_hand_landmarks:
                     for hand_landmarks in results.multi_hand_landmarks:
                         mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-
-                        #relative
-                        landmark_list = [[hand_landmarks.landmark[i].x, hand_landmarks.landmark[i].y] for i in range(len(hand_landmarks.landmark))]
-                        #flattens list
-                        landmark_list = [x for pair in landmark_list for x in pair]
-
-                        #convert to relative coordinates, where origin is first landmark
-                        base_x, base_y = landmark_list[0], landmark_list[1]
-                        landmark_list = [(x - base_x) for x in landmark_list[::2]] + [(y - base_y) for y in landmark_list[1::2]]
-                        #maximum absolute value
-                        max_value = max(list(map(abs, landmark_list)))
-                        #normalise 
-                        landmark_list = [n / max_value for n in landmark_list]
-                        
-                        
-                        #reshape landmarks for model input (same way it was trained)
-                        landmark_list = np.array(landmark_list).reshape((1, 42, 1))
-
-                        #predicting ^-^
-                        predictions = cnn_model.predict(landmark_list)
-                        #class index
-                        predicted_class = np.argmax(predictions)
-                        #alphabetical representation
-                        alphabetical_label = label_names[predicted_class]
-
+                        #normalise the landmarks (need to normalise cause when collecting the landmarks they were also normalised)
+                        normalized_landmarks = normalise_landmark(hand_landmarks)
+                        #prediction
+                        alphabetical_label = get_predictions_from_model(normalized_landmarks,cnn_model)
                         cv2.putText(image, f"Predicted: {alphabetical_label}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                 ret, buffer = cv2.imencode('.jpg', image)
                 frame = buffer.tobytes()
-
                 #yield the frame as a response
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
