@@ -15,110 +15,11 @@
 
     <div class="container">
         <div class="center">
-            <div class="title"><h2>Quiz: {{ difficulty }}</h2></class>
+            <div class="title"><h2>Difficulty Selected: {{ difficulty }}</h2></class>
                 <p>{{ word_pool }}</p>
-                <p>{{ message }}</p> 
-
-                <img src="{{ url_for('video_feed') }}" />
-
+                <img src="{{ url_for('video_feed') }}" class="video-feed"/>
             <br>
         </div>
     </div>
 </body>
-
 </html>
-<!-- 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Language Tutor</title>
-    <link rel="stylesheet" type="text/css" href="/static/css/styles1.css">
-</head>
-
-<body>
-    <div class="menu">
-        <a href="{{ url_for('difficulty') }}" class="backbutton" >Back</a>
-    </div>
-
-    <div class="container">
-        <div class="center">
-            <div class="title">
-                <h2>Quiz</h2>
-            </div>
-            <p>{{ message }}</p> 
-            <p id="word-list">Word list:</p>
-            <ul id="word-list-items"></ul>
-            <p id="current-word">Current word: </p>
-            <p id="current-letter">Current letter: </p>
-            <p id="time-remaining">Time remaining: {{ time_limit }} seconds</p>
-
-            <img src="{{ url_for('video_feed') }}" />
-
-            <br>
-        </div>
-    </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            var guessed_letters = [];  // Initialize an empty list to store guessed letters
-            var timeRemaining = parseInt("{{ time_limit }}");  // Initialize the time remaining
-
-            $.ajax({
-                type: 'GET',
-                url: '/update_word',
-                success: function(data) {
-                    $('#word-to-spell').text('Word to spell: ' + data.word_to_spell);
-                    $('#current-letter').text('Current letter: ' + data.letter);
-                }
-            });
-
-            setInterval(function() {
-                $.ajax({
-                    type: 'GET',
-                    url: '/update_letter',
-                    success: function(data) {
-                        $('#current-letter').text('Current letter: ' + data.letter);
-                    }
-                });
-
-                $.ajax({
-                    type: 'GET',
-                    url: '/get_current_word',
-                    success: function(data) {
-                        $('#current-word').text('Current word: ' + data.word);
-                    }
-                });
-
-                $.ajax({
-                    type: 'GET',
-                    url: '/get_time_remaining',
-                    success: function(data) {
-                        timeRemaining = data.time_remaining;
-                        $('#time-remaining').text('Time remaining: ' + timeRemaining + ' seconds');
-                    }
-                });
-            }, 1000); // Update every 1 second
-
-            // Send a request to the server when a letter is guessed correctly
-            $(document).on('gestureRecognized', function(event, gesture) {
-                var letter = gesture.letter;  // Get the recognized letter
-                if (letter === $('#current-letter').text().split(':')[1].trim()) {
-                    $.ajax({
-                        type: 'POST',
-                        url: '/guess_letter',
-                        data: {'letter': letter},
-                        success: function(data) {
-                            guessed_letters.push(letter);  // Add the guessed letter to the list
-                        }
-                    });
-                }
-            });
-        });
-    </script>
-</body>
-
-</html> -->

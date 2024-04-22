@@ -4,8 +4,8 @@ import cv2
 import mediapipe as mp 
 import re
 from keras.models import load_model
-
 import numpy as np
+
 
 app = Flask(__name__)
 #load model
@@ -52,7 +52,7 @@ def quiz(difficulty):
     return render_template('quiz.html', word_pool=word_pool, difficulty=difficulty)
 
 #word pool
-easy_word_pool = ['cat','dog','fish','hat']
+easy_word_pool = ['a','b','c','d']
 medium_word_pool = ['sasha', 'many', 'minion', 'stuart']
 hard_word_pool = ['banana', 'zebra', 'jux', 'sticky']
 custom_word_pool = []
@@ -115,13 +115,15 @@ def gen_frames():
                 results = hands.process(image)
                 image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
                 if results.multi_hand_landmarks:
-                    for hand_landmarks in results.multi_hand_landmarks:
-                        mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-                        #normalise the landmarks (need to normalise cause when collecting the landmarks they were also normalised)
-                        normalized_landmarks = normalise_landmark(hand_landmarks)
-                        #prediction
-                        alphabetical_label = get_predictions_from_model(normalized_landmarks,cnn_model)
-                        cv2.putText(image, f"Predicted: {alphabetical_label}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
+                        #cause its inverted left means Right Hand.
+                        if handedness.classification[0].label == "Left":
+                            mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+                            #normalise the landmarks (need to normalise cause when collecting the landmarks they were also normalised)
+                            normalized_landmarks = normalise_landmark(hand_landmarks)
+                            #prediction
+                            alphabetical_label = get_predictions_from_model(normalized_landmarks,cnn_model)
+                            cv2.putText(image, f"Predicted: {alphabetical_label}", (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 2)
                 ret, buffer = cv2.imencode('.jpg', image)
                 frame = buffer.tobytes()
                 #yield the frame as a response

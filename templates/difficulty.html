@@ -5,27 +5,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Language Tutor</title>
-    <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/styles1.css">
 </head>
 
 <body>
+    <div class="menu">
+        <a href="{{ url_for('home') }}" class="backbutton" >Back</a>
+    </div>
 
     <div class="container">
         <div class="center">
-            <h2 style="font-weight: bold;">Select Difficulty</h2>
-            <p>Personalise your learning by selecting a difficulty</p>
+            <div class="title"><h2>Select Difficulty</h2></div>
 
-            <div class="quiz-container">
-                <div class="button-container">
-                  <button data-difficulty="easy">Easy</button>
-                  <button data-difficulty="medium">Medium</button>
-                  <button data-difficulty="hard">Hard</button>
+            <form action="{{ url_for('quiz', difficulty='easy') }}" method="get">
+                <div class ="menu">
+                    <div class="button">
+                        <button type="submit">Easy</button>
+                    </div>
                 </div>
-              </div>
-              <br>
-                <img src="{{ url_for('video_feed') }}" />
+            </form>
+            
+            <form action="{{ url_for('quiz', difficulty='medium') }}" method="get">
+                <div class ="menu">
+                    <div class="button">
+                        <button type="submit">Medium</button>
+                    </div>
+                </div>
+                
+            </form>
+            
+            <form action="{{ url_for('quiz', difficulty='hard') }}" method="get">
+                <div class ="menu">
+                    <div class="button">
+                        <button type="submit">Hard</button>
+                    </div>
+                </div>
+            </form>
 
-            <br>
+            <div class= "menu animation"><p>Add your own words</p></div>
+            <form action="{{ url_for('add_word') }}" method="post">
+                <textarea name="customwords" maxlength="500" spellcheck="false" placeholder="Only Letters are allowed. Maximum of 500 characters. Seperate each word using a , (comma)" rows="5" cols="40"></textarea>
+                <br>
+                <div class ="menu">
+                    <div class="button">
+                        <button type="submit">Custom Mode</button>
+                    </div>
+                </div>
+
+                {% if error_message %}
+                    <p style="color: rgb(180, 65, 65);">{{ error_message }}</p>
+                {% endif %}
+            </form>
         </div>
     </div>
 
