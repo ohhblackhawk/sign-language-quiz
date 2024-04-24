@@ -40,25 +40,6 @@
     //set up socketio connection
     const socket = io();
 
-    // Store the word pool in a variable
-    let wordPool = [];
-
-    // Receive the word pool from the server
-    socket.on('start_quiz', wordPoolVar => {
-      wordPool = wordPoolVar;
-      console.log('Received word pool:', wordPool);
-      // Update the current word and index
-        current_word = wordPoolVar[0]; // assume the first word in the pool is the current word
-        current_index = 0;
-
-        // Set the initial ASL GIF
-        const aslGifElement = document.getElementById('asl-gif');
-        const letter = current_word[current_index].toUpperCase();
-        console.log(`Setting initial ASL GIF to: ${letter}.gif`);
-        aslGifElement.src = `/static/images/${letter}.gif`;
-        aslGifElement.alt = letter;
-    });
-
     //set up webcam
     navigator.mediaDevices.getUserMedia({video: true})
         .then(stream => {
@@ -68,12 +49,9 @@
 
             // Get the ASL GIF element
             const aslGifElement = document.getElementById('asl-gif');
+            console.log('ASL GIF element:', aslGifElement);
 
-            // Set the initial ASL GIF
-            if (current_word && current_index < current_word.length) {
-                aslGifElement.src = `/static/images/${current_word[current_index]}.gif`;
-                aslGifElement.alt = current_word[current_index];
-            }
+            
 
             //send video frames to flask for process
             setInterval(() => {
@@ -82,7 +60,7 @@
                     socket.emit('image', blob);
                 });
             }, 1000);
-            
+
             //recieve prediction
             socket.on('prediction', prediction => {
                 console.log('Recieved predictions:', prediction);
@@ -92,15 +70,20 @@
                 const currentLetterElement = document.querySelector('.menu.animation:nth-child(3) p');
                 if (currentLetterElement.textContent.startsWith('Current Letter: ') && prediction === currentLetterElement.textContent.trim().slice(13)) {
                     currentLetterElement.textContent = `Current Letter: ${prediction}`;
-                }
+                };
             });
-
+            
             //update current letter display when backend emits an update_letter event
             socket.on('update_letter', letter => {
+                console.log(`Received update_letter event with letter: ${letter}`);
                 document.getElementById('current-letter').textContent = `Current Letter: ${letter}`;
+                console.log(`Updating current-letter element with text: ${letter}`);
                 aslGifElement.src = `/static/images/${letter}.gif`;
+                console.log(`Updating aslGifElement.src with: /static/images/${letter}.gif`);
                 aslGifElement.alt = letter;
+                console.log(`Updating aslGifElement.alt with: ${letter}`);
             });
+
 
             socket.on('word_spelt', message => {
                 console.log('Word has been spelt!');
@@ -121,10 +104,21 @@
     //handle socketio connection
     socket.on('connect', () => {
         console.log('Connected to the server');
+        // Emit an event to the backend to get the initial letter
+        socket.emit('get_initial_letter');
     });
 
     socket.on('disconnect', () => {
         console.log('Disconnected from the server');
+    });
+
+    // Handle the initial letter response from the backend
+    socket.on('initial_letter', letter => {
+        console.log(`Received initial letter: ${letter}`);
+        document.getElementById('current-letter').textContent = `Current Letter: ${letter}`;
+        const aslGifElement = document.getElementById('asl-gif');
+        aslGifElement.src = `/static/images/${letter}.gif`;
+        aslGifElement.alt = letter;
     });
 </script>
 

@@ -20,14 +20,25 @@ cnn_model = load_model('cnn_model.h5')
 #num to letter
 label_names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 #global 
+#word pool
+easy_word_pool = ['cat', 'dog', 'sun', 'fudge', 'boy', 'god', 'yes', 'tower', 'people']
+medium_word_pool = ['house', 'cloud', 'dance', 'flute', 'space', 'horse', 'knife', 'image', 'fruit', 'stamp']
+hard_word_pool = ['jacket', 'ranger', 'jungle', 'zebra','earth']
+#thequickbrownfoxjumpsoverlazydog
+custom_word_pool = []
+
 
 current_word = None
 current_index = 0
 
+
+
 #sockets
 @socketio.on('connect')
 def connect():
-    print('Client connected')
+    global current_word
+    initial_letter = current_word[0] 
+    emit('update_letter', initial_letter, broadcast=True)
 
 @socketio.on('disconnect')
 def disconnect():
@@ -51,9 +62,13 @@ def handle_image(blob):
 
             # Move to the next letter in the word
             current_index += 1
-            # Emit an event to update the current letter on the client-side
-            emit('update_letter', current_word[current_index], broadcast=True)
-
+            # Ensure current_index is within the valid range
+            if 0 <= current_index < len(current_word):
+                # Emit an event to update the current letter on the client-side
+                emit('update_letter', current_word[current_index], broadcast=True)
+            else:
+                #goes out of index
+                pass
             # Check if the word has been fully spelled
             if current_index == len(current_word):
                 emit('word_spelt', 'Well done!', broadcast=True)
@@ -111,13 +126,6 @@ def send_image(letter):
 def difficulty():
     return render_template('difficulty.html')
 
-#word pool
-easy_word_pool = ['cat', 'dog', 'sun', 'fun', 'run', 'boy', 'god', 'yes', 'no', 'man']
-medium_word_pool = ['house', 'cloud', 'dance', 'flute', 'space', 'horse', 'knife', 'image', 'fruit', 'stamp']
-hard_word_pool = ['jacket', 'ranger', 'jungle', 'zebra','earth']
-#thequickbrownfoxjumpsoverlazydog
-custom_word_pool = []
-
 @app.route('/quiz/<difficulty>')
 def quiz(difficulty):
     global current_word, current_index
@@ -137,9 +145,6 @@ def quiz(difficulty):
 
     current_word = random.choice(word_pool)
     current_index = 0
-    #sends word pool to client
-    print('Emitting start_quiz event with word pool:', word_pool)
-    socketio.emit('start_quiz', word_pool)
     return render_template('quiz.html', word_pool=word_pool, difficulty=difficulty, current_word=current_word, current_index=current_index)
 
 #for custom word
