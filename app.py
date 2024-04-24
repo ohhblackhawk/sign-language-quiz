@@ -1,17 +1,62 @@
 # app.py
-from flask import Flask, render_template, request, jsonify, Response, make_response, send_file,redirect, url_for
+from flask import Flask, render_template, request, make_response, send_file,redirect, url_for
 import cv2
 import mediapipe as mp 
 import re
 from keras.models import load_model
 import numpy as np
+from flask_socketio import SocketIO, emit
 
 
 app = Flask(__name__)
+
+#this should be stored else where, just placing it here for now.
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app)
+
 #load model
 cnn_model = load_model('cnn_model.h5')
 #num to letter
 label_names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
+#sockets
+@socketio.on('connect')
+def connect():
+    print('Client connected')
+
+@socketio.on('disconnect')
+def disconnect():
+    print('Client disconnected')
+
+@socketio.on('image')
+def process_image(blob):
+    try:
+        # Convert blob to NumPy array
+        frame = np.frombuffer(blob, np.uint8)
+        frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
+
+        if frame is None:
+            print("Error: Unable to decode image")
+            socketio.emit('error', 'Error processing image')
+            return
+
+        #process the image frame using mediapiep n cnn model
+        mp_hands = mp.solutions.hands
+        hands = mp_hands.Hands(static_image_mode=True,max_num_hands = 2, min_detection_confidence = 0.5)
+        results = hands.process(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
+        print('processed hand detection')
+
+        if results.multi_hand_landmarks:
+            for hand_landmarks in results.multi_hand_landmarks:
+                landmark_list = normalise_landmark(hand_landmarks)
+                predictions = get_predictions_from_model(landmark_list, cnn_model)
+                print("Predicted letter:", predictions)
+                socketio.emit('prediction',predictions)
+                print("Emitted prediction to client")
+    except cv2.error as e:
+        print(f"Error processing image: {e}")
+        socketio.emit('error', 'Error processing image')
+
 
 @app.route('/')
 def home():
@@ -99,41 +144,8 @@ def normalise_landmark(hand_landmarks):
     landmark_list = np.array(landmark_list).reshape((1, 42, 1))
     return landmark_list
     
-def gen_frames():
-    camera = cv2.VideoCapture(0)
-    mp_drawing = mp.solutions.drawing_utils
-    mp_hands = mp.solutions.hands
-    with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5) as hands:
-        while True:
-            success, frame = camera.read()
-            if not success:
-                break
-            else:
-                image = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                #less blue imaging
-                image.flags.writeable = True
-                results = hands.process(image)
-                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-                if results.multi_hand_landmarks:
-                    for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
-                        #cause its inverted left means Right Hand.
-                        if handedness.classification[0].label == "Left":
-                            mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-                            #normalise the landmarks (need to normalise cause when collecting the landmarks they were also normalised)
-                            normalized_landmarks = normalise_landmark(hand_landmarks)
-                            #prediction
-                            alphabetical_label = get_predictions_from_model(normalized_landmarks,cnn_model)
-                            cv2.putText(image, f"Predicted: {alphabetical_label}", (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 2)
-                ret, buffer = cv2.imencode('.jpg', image)
-                frame = buffer.tobytes()
-                #yield the frame as a response
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
-@app.route('/video_feed')
-def video_feed():
-    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(debug=True)
+    socketio.run(app, host='localhost', port=5000)
 

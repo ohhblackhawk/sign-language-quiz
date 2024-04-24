@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Language Tutor</title>
     <link rel="stylesheet" type="text/css" href="/static/css/styles1.css">
+    
 </head>
 
 <body>
@@ -15,11 +16,60 @@
 
     <div class="container">
         <div class="center">
-            <div class="title"><h2>Difficulty Selected: {{ difficulty }}</h2></class>
+            <div class="title"><h2>Difficulty Selected: {{ difficulty }}</h2>
                 <p>{{ word_pool }}</p>
-                <img src="{{ url_for('video_feed') }}" class="video-feed"/>
-            <br>
+                <br>
+                <div id="prediction-result"></div>
+                <video id="video" width="640" height="480" autoplay></video>
         </div>
     </div>
+    
 </body>
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.5/dist/socket.io.min.js"></script>
+<script>
+    //get video element
+    const video = document.getElementById('video');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 640;
+    canvas.height = 480;
+
+    //set up socketio connection
+    const socket = io();
+
+    //set up webcam
+    navigator.mediaDevices.getUserMedia({video: true})
+        .then(stream => {
+            console.log('Video stream recieved',stream)
+            video.srcObject = stream;
+            video.play();
+
+            //send video frames to flask for process
+            setInterval(() => {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob(blob => {
+                    socket.emit('image', blob);
+                });
+            }, 1000);
+            //recieve prediction
+            socket.on('prediction', prediction =>{
+                console.log('Recieved predictions:',prediction);
+                document.getElementById('prediction-result').innerHTML = `Predicted Letter: ${prediction}`;
+            });
+        })
+        .catch(error => {
+          console.error('Error setting up webcam stream:', error);
+          console.log('Error details:', error.name, error.message, error.stack)
+        });
+
+    //handle socketio connection
+    socket.on('connect', () => {
+        console.log('Connected to the server');
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Disconnected from the server');
+    });
+</script>
+
 </html>
