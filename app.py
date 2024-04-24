@@ -33,10 +33,35 @@ def connect():
 def disconnect():
     print('Client disconnected')
 
-
 @socketio.on('image')
-def process_image(blob):
-    global current_word, current_index
+def handle_image(blob):
+    global current_index
+    global current_word
+    predicted_letter = predict_letter(blob)
+
+    if predicted_letter:
+        # Check if the word has been fully spelled
+        if current_index == len(current_word):
+            emit('word_spelt', 'Well done!', broadcast=True)
+            emit('redirect', url_for('difficulty'), broadcast=True)
+            return
+
+        # Check if the predicted letter matches the expected letter
+        if predicted_letter == current_word[current_index]:
+
+            # Move to the next letter in the word
+            current_index += 1
+            # Emit an event to update the current letter on the client-side
+            emit('update_letter', current_word[current_index], broadcast=True)
+
+            # Check if the word has been fully spelled
+            if current_index == len(current_word):
+                emit('word_spelt', 'Well done!', broadcast=True)
+                emit('redirect', url_for('difficulty'), broadcast=True)
+        # Return the predicted letter to the client-side
+        emit('prediction', predicted_letter, broadcast=True)
+
+def predict_letter(blob):
     try:
         # Convert blob to NumPy array
         frame = np.frombuffer(blob, np.uint8)
@@ -44,37 +69,24 @@ def process_image(blob):
 
         if frame is None:
             print("Error: Unable to decode image")
-            socketio.emit('error', 'Error processing image')
-            return
+            return None
 
-        # process the image frame using mediapiep n cnn model
+        # Process the image frame using MediaPipe and CNN model
         mp_hands = mp.solutions.hands
-        hands = mp_hands.Hands(static_image_mode=True,max_num_hands = 2, min_detection_confidence = 0.5)
-        results = hands.process(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
-        print('processed hand detection')
+        hands = mp_hands.Hands(static_image_mode=True, max_num_hands=2, min_detection_confidence=0.5)
+        results = hands.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                landmark_list = normalise_landmark(hand_landmarks)
-                predictions = get_predictions_from_model(landmark_list, cnn_model)
-                print("Predicted letter:", predictions)
+                normalised_landmarks = normalise_landmark(hand_landmarks)
+                predicted_letter = get_predictions_from_model(normalised_landmarks, cnn_model)
+                return predicted_letter
 
-                if current_word is None:
-                    print("Error: current_word is None")
-                    socketio.emit('error', 'Error: current_word is None')
-                    return
+        return None
 
-                if predictions == current_word[current_index]:
-                    current_index += 1
-                    if current_index == len(current_word):
-                        current_word = random.choice(word_pool)
-                        current_index = 0
-                socketio.emit('prediction', predictions)
-                print("Emitted prediction to client")
     except cv2.error as e:
         print(f"Error processing image: {e}")
-        socketio.emit('error', 'Error processing image')
-
+        return None
 
 @app.route('/')
 def home():
@@ -100,9 +112,10 @@ def difficulty():
     return render_template('difficulty.html')
 
 #word pool
-easy_word_pool = ['aba','be','cole','dan']
-medium_word_pool = ['sasha', 'many', 'minion', 'stuart']
-hard_word_pool = ['banana', 'zebra', 'jux', 'sticky']
+easy_word_pool = ['cat', 'dog', 'sun', 'fun', 'run', 'boy', 'god', 'yes', 'no', 'man']
+medium_word_pool = ['house', 'cloud', 'dance', 'flute', 'space', 'horse', 'knife', 'image', 'fruit', 'stamp']
+hard_word_pool = ['jacket', 'ranger', 'jungle', 'zebra','earth']
+#thequickbrownfoxjumpsoverlazydog
 custom_word_pool = []
 
 @app.route('/quiz/<difficulty>')
@@ -124,6 +137,9 @@ def quiz(difficulty):
 
     current_word = random.choice(word_pool)
     current_index = 0
+    #sends word pool to client
+    print('Emitting start_quiz event with word pool:', word_pool)
+    socketio.emit('start_quiz', word_pool)
     return render_template('quiz.html', word_pool=word_pool, difficulty=difficulty, current_word=current_word, current_index=current_index)
 
 #for custom word

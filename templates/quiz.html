@@ -13,29 +13,51 @@
     <div class="menu">
             <a href="{{ url_for('difficulty') }}" class="backbutton" >Back</a>
     </div>
-
-    <div class="container">
-        <div class="center">
-            <div class="title"><h2>Difficulty Selected: {{ difficulty }}</h2>
-                <p>{{ word_pool }}</p>
-                <br>
-                <div id="prediction-result"></div>
+    <div class="title"><h2>Difficulty Selected: {{ difficulty }}</h2></div>
+        <div class= "menu animation"><p>Current Word: {{ current_word }}</p></div>
+        <div id="word-spelt" style="display: none;"></div>
+        <div class="menu animation"><p id="current-letter">Current Letter: {{ current_word[current_index] }}</p></div>
+        <div id="prediction-result"></div>
+        <div class="quizcontainer">
+                
                 <video id="video" width="640" height="480" autoplay></video>
+                <img id="asl-gif" src="" alt="">
         </div>
-    </div>
     
 </body>
+
 <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.5/dist/socket.io.min.js"></script>
 <script>
     //get video element
     const video = document.getElementById('video');
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
+    let current_word = ''; // Initialize the current word variable
+    let current_index = 0; // Initialize the current index variable
     canvas.width = 640;
     canvas.height = 480;
 
     //set up socketio connection
     const socket = io();
+
+    // Store the word pool in a variable
+    let wordPool = [];
+
+    // Receive the word pool from the server
+    socket.on('start_quiz', wordPoolVar => {
+      wordPool = wordPoolVar;
+      console.log('Received word pool:', wordPool);
+      // Update the current word and index
+        current_word = wordPoolVar[0]; // assume the first word in the pool is the current word
+        current_index = 0;
+
+        // Set the initial ASL GIF
+        const aslGifElement = document.getElementById('asl-gif');
+        const letter = current_word[current_index].toUpperCase();
+        console.log(`Setting initial ASL GIF to: ${letter}.gif`);
+        aslGifElement.src = `/static/images/${letter}.gif`;
+        aslGifElement.alt = letter;
+    });
 
     //set up webcam
     navigator.mediaDevices.getUserMedia({video: true})
@@ -44,6 +66,15 @@
             video.srcObject = stream;
             video.play();
 
+            // Get the ASL GIF element
+            const aslGifElement = document.getElementById('asl-gif');
+
+            // Set the initial ASL GIF
+            if (current_word && current_index < current_word.length) {
+                aslGifElement.src = `/static/images/${current_word[current_index]}.gif`;
+                aslGifElement.alt = current_word[current_index];
+            }
+
             //send video frames to flask for process
             setInterval(() => {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -51,10 +82,35 @@
                     socket.emit('image', blob);
                 });
             }, 1000);
+            
             //recieve prediction
-            socket.on('prediction', prediction =>{
-                console.log('Recieved predictions:',prediction);
+            socket.on('prediction', prediction => {
+                console.log('Recieved predictions:', prediction);
                 document.getElementById('prediction-result').innerHTML = `Predicted Letter: ${prediction}`;
+
+                //update current letter display if predicted letter matches expected letter
+                const currentLetterElement = document.querySelector('.menu.animation:nth-child(3) p');
+                if (currentLetterElement.textContent.startsWith('Current Letter: ') && prediction === currentLetterElement.textContent.trim().slice(13)) {
+                    currentLetterElement.textContent = `Current Letter: ${prediction}`;
+                }
+            });
+
+            //update current letter display when backend emits an update_letter event
+            socket.on('update_letter', letter => {
+                document.getElementById('current-letter').textContent = `Current Letter: ${letter}`;
+                aslGifElement.src = `/static/images/${letter}.gif`;
+                aslGifElement.alt = letter;
+            });
+
+            socket.on('word_spelt', message => {
+                console.log('Word has been spelt!');
+                // Display the word spelt in the UI
+                const wordSpeltElement = document.getElementById('word-spelt');
+                wordSpeltElement.textContent = `Word has been spelt`;
+                wordSpeltElement.style.display = 'block'; // Show the element
+            });
+            socket.on('redirect', function (url) {
+                window.location.href = url;
             });
         })
         .catch(error => {

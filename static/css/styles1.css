@@ -195,9 +195,25 @@ body {
 
   /* videofeed */
 
-  .video-feed {
-    max-width: 50%;
+.quizcontainer{
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+.quizcontainer #video {
+    max-width: 25%;
     height: auto;
     object-fit: cover;
     border-radius: 10px;
+  }
+
+.quizcontainer #asl-gifs{
+    width: 20%;
+    height: auto;
+    object-fit: cover;
+    width: 100px;
+    height:auto;
+    border-radius: 10px;
+
   }
