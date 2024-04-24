@@ -1,11 +1,12 @@
 # app.py
-from flask import Flask, render_template, request, make_response, send_file,redirect, url_for
+from flask import Flask, render_template, request, make_response, send_file,redirect, url_for, abort
 import cv2
 import mediapipe as mp 
 import re
 from keras.models import load_model
 import numpy as np
 from flask_socketio import SocketIO, emit
+import random
 
 
 app = Flask(__name__)
@@ -18,6 +19,10 @@ socketio = SocketIO(app)
 cnn_model = load_model('cnn_model.h5')
 #num to letter
 label_names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+#global 
+
+current_word = None
+current_index = 0
 
 #sockets
 @socketio.on('connect')
@@ -28,8 +33,10 @@ def connect():
 def disconnect():
     print('Client disconnected')
 
+
 @socketio.on('image')
 def process_image(blob):
+    global current_word, current_index
     try:
         # Convert blob to NumPy array
         frame = np.frombuffer(blob, np.uint8)
@@ -40,7 +47,7 @@ def process_image(blob):
             socketio.emit('error', 'Error processing image')
             return
 
-        #process the image frame using mediapiep n cnn model
+        # process the image frame using mediapiep n cnn model
         mp_hands = mp.solutions.hands
         hands = mp_hands.Hands(static_image_mode=True,max_num_hands = 2, min_detection_confidence = 0.5)
         results = hands.process(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
@@ -51,7 +58,18 @@ def process_image(blob):
                 landmark_list = normalise_landmark(hand_landmarks)
                 predictions = get_predictions_from_model(landmark_list, cnn_model)
                 print("Predicted letter:", predictions)
-                socketio.emit('prediction',predictions)
+
+                if current_word is None:
+                    print("Error: current_word is None")
+                    socketio.emit('error', 'Error: current_word is None')
+                    return
+
+                if predictions == current_word[current_index]:
+                    current_index += 1
+                    if current_index == len(current_word):
+                        current_word = random.choice(word_pool)
+                        current_index = 0
+                socketio.emit('prediction', predictions)
                 print("Emitted prediction to client")
     except cv2.error as e:
         print(f"Error processing image: {e}")
@@ -81,9 +99,15 @@ def send_image(letter):
 def difficulty():
     return render_template('difficulty.html')
 
-# choose difficulty
-@app.route('/quiz/<difficulty>', methods=['GET'])
+#word pool
+easy_word_pool = ['aba','be','cole','dan']
+medium_word_pool = ['sasha', 'many', 'minion', 'stuart']
+hard_word_pool = ['banana', 'zebra', 'jux', 'sticky']
+custom_word_pool = []
+
+@app.route('/quiz/<difficulty>')
 def quiz(difficulty):
+    global current_word, current_index
     if difficulty == 'easy':
         word_pool = easy_word_pool
     elif difficulty == 'medium':
@@ -93,14 +117,14 @@ def quiz(difficulty):
     elif difficulty == 'custom':
         word_pool = custom_word_pool
     else:
-        return "Invalid Difficulty Level"
-    return render_template('quiz.html', word_pool=word_pool, difficulty=difficulty)
+        return render_template('difficulty.html', error_message="Invalid difficulty level!")
 
-#word pool
-easy_word_pool = ['a','b','c','d']
-medium_word_pool = ['sasha', 'many', 'minion', 'stuart']
-hard_word_pool = ['banana', 'zebra', 'jux', 'sticky']
-custom_word_pool = []
+    if not word_pool:
+        return render_template('difficulty.html', error_message="No words in this difficulty level!")
+
+    current_word = random.choice(word_pool)
+    current_index = 0
+    return render_template('quiz.html', word_pool=word_pool, difficulty=difficulty, current_word=current_word, current_index=current_index)
 
 #for custom word
 @app.route('/add_word', methods=['POST'])
