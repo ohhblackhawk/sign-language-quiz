@@ -117,7 +117,7 @@
     socket.on('connect', () => {
         console.log('Connected to the server');
         // Emit an event to the backend to get the initial letter
-        socket.emit('get_initial_letter');
+        socket.emit('initial_letter');
     });
 
     socket.on('disconnect', () => {

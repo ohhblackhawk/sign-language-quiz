@@ -47,17 +47,14 @@ def handle_image(blob):
     global current_index
     global current_word
     predicted_letter = predict_letter(blob)
-
     if predicted_letter:
         #word fully spelt?
         if current_index == len(current_word):
             emit('word_spelt', 'Well done!', broadcast=True)
             emit('redirect', url_for('difficulty'), broadcast=True)
             return
-
         #predicted letter matches letter?
         if predicted_letter == current_word[current_index]:
-
             current_index += 1
             #valid range
             if 0 <= current_index < len(current_word):
@@ -66,7 +63,7 @@ def handle_image(blob):
             else:
                 #goes out of index
                 pass
-            # Check if the word has been fully spelled
+            #checks word has been fully spelled
             if current_index == len(current_word):
                 emit('word_spelt', 'Well done!', broadcast=True)
                 emit('redirect', url_for('difficulty'), broadcast=True)
@@ -78,11 +75,9 @@ def predict_letter(blob):
         #blob to numpy array
         frame = np.frombuffer(blob, np.uint8)
         frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
-
         if frame is None:
             print("Error: Unable to decode image")
             return None
-
         #mediapipe and cnn model
         mp_hands = mp.solutions.hands
         hands = mp_hands.Hands(static_image_mode=True, max_num_hands=2, min_detection_confidence=0.5)
@@ -96,11 +91,36 @@ def predict_letter(blob):
                 predicted_letter = get_predictions_from_model(normalised_landmarks, cnn_model)
                 return predicted_letter
         return None
-
     except cv2.error as e:
         print(f"Error processing image: {e}")
         return None
+    
+#prediction
+def get_predictions_from_model(landmark_list, cnn_model):
+    #predicts ^-^
+    predictions = cnn_model.predict(landmark_list)
+    predicted_class = np.argmax(predictions)
+    #letters from class
+    alphabetical_label = label_names[predicted_class]
+    return alphabetical_label
 
+#normalise hand landmarks
+def normalise_landmark(hand_landmarks):
+    #relative
+    landmark_list = [[hand_landmarks.landmark[i].x, hand_landmarks.landmark[i].y] for i in range(len(hand_landmarks.landmark))]
+    #flattens list
+    landmark_list = [x for pair in landmark_list for x in pair]
+    #convert to relative coordinates, where origin is first landmark
+    base_x, base_y = landmark_list[0], landmark_list[1]
+    landmark_list = [(x - base_x) for x in landmark_list[::2]] + [(y - base_y) for y in landmark_list[1::2]]
+    #maximum absolute value
+    max_value = max(list(map(abs, landmark_list)))
+    #normalise 
+    landmark_list = [n / max_value for n in landmark_list]
+    #reshape landmarks for model input (same way it was trained)
+    landmark_list = np.array(landmark_list).reshape((1, 42, 1))
+    return landmark_list
+    
 @app.route('/')
 def home():
     return render_template('home.html')
@@ -161,32 +181,7 @@ def add_word():
         custom_word_pool.append(word)
     return redirect(url_for('quiz',difficulty='custom'))
 
-#prediction
-def get_predictions_from_model(landmark_list, cnn_model):
-    #predicts ^-^
-    predictions = cnn_model.predict(landmark_list)
-    predicted_class = np.argmax(predictions)
-    #letters from class
-    alphabetical_label = label_names[predicted_class]
-    return alphabetical_label
 
-#normalise hand landmarks
-def normalise_landmark(hand_landmarks):
-    #relative
-    landmark_list = [[hand_landmarks.landmark[i].x, hand_landmarks.landmark[i].y] for i in range(len(hand_landmarks.landmark))]
-    #flattens list
-    landmark_list = [x for pair in landmark_list for x in pair]
-    #convert to relative coordinates, where origin is first landmark
-    base_x, base_y = landmark_list[0], landmark_list[1]
-    landmark_list = [(x - base_x) for x in landmark_list[::2]] + [(y - base_y) for y in landmark_list[1::2]]
-    #maximum absolute value
-    max_value = max(list(map(abs, landmark_list)))
-    #normalise 
-    landmark_list = [n / max_value for n in landmark_list]
-    #reshape landmarks for model input (same way it was trained)
-    landmark_list = np.array(landmark_list).reshape((1, 42, 1))
-    return landmark_list
-    
 
 if __name__ == '__main__':
     # app.run(debug=True)
