@@ -21,7 +21,7 @@ cnn_model = load_model('cnn_model.h5')
 label_names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 #global 
 #word pool
-easy_word_pool = ['cat', 'dog', 'sun', 'fudge', 'boy', 'god', 'yes', 'tower', 'people']
+easy_word_pool = ['cat', 'dog', 'hut', 'fudge', 'boy', 'god', 'yes', 'tower']
 medium_word_pool = ['house', 'cloud', 'dance', 'flute', 'space', 'horse', 'knife', 'image', 'fruit', 'stamp']
 hard_word_pool = ['jacket', 'ranger', 'jungle', 'zebra','earth']
 #thequickbrownfoxjumpsoverlazydog
@@ -30,8 +30,6 @@ custom_word_pool = []
 
 current_word = None
 current_index = 0
-
-
 
 #sockets
 @socketio.on('connect')
@@ -51,20 +49,19 @@ def handle_image(blob):
     predicted_letter = predict_letter(blob)
 
     if predicted_letter:
-        # Check if the word has been fully spelled
+        #word fully spelt?
         if current_index == len(current_word):
             emit('word_spelt', 'Well done!', broadcast=True)
             emit('redirect', url_for('difficulty'), broadcast=True)
             return
 
-        # Check if the predicted letter matches the expected letter
+        #predicted letter matches letter?
         if predicted_letter == current_word[current_index]:
 
-            # Move to the next letter in the word
             current_index += 1
-            # Ensure current_index is within the valid range
+            #valid range
             if 0 <= current_index < len(current_word):
-                # Emit an event to update the current letter on the client-side
+                #update on client side
                 emit('update_letter', current_word[current_index], broadcast=True)
             else:
                 #goes out of index
@@ -73,12 +70,12 @@ def handle_image(blob):
             if current_index == len(current_word):
                 emit('word_spelt', 'Well done!', broadcast=True)
                 emit('redirect', url_for('difficulty'), broadcast=True)
-        # Return the predicted letter to the client-side
+        #update predict letter on client side
         emit('prediction', predicted_letter, broadcast=True)
 
 def predict_letter(blob):
     try:
-        # Convert blob to NumPy array
+        #blob to numpy array
         frame = np.frombuffer(blob, np.uint8)
         frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
 
@@ -86,17 +83,18 @@ def predict_letter(blob):
             print("Error: Unable to decode image")
             return None
 
-        # Process the image frame using MediaPipe and CNN model
+        #mediapipe and cnn model
         mp_hands = mp.solutions.hands
         hands = mp_hands.Hands(static_image_mode=True, max_num_hands=2, min_detection_confidence=0.5)
         results = hands.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
+                #norlaise landmarks
                 normalised_landmarks = normalise_landmark(hand_landmarks)
+                #get prediction
                 predicted_letter = get_predictions_from_model(normalised_landmarks, cnn_model)
                 return predicted_letter
-
         return None
 
     except cv2.error as e:
@@ -116,7 +114,7 @@ def signs():
 def send_image(letter):
     #cache timeout 1 hr
     cache_timeout = 3600
-    #attaching headers
+    #attaching headers, to store the sign gifs
     response = make_response(send_file('static/images/{}.gif'.format(letter)))
     response.headers['Cache-Control'] = 'max-age={}, public'.format(cache_timeout)
     return response
