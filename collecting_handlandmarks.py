@@ -14,7 +14,7 @@ labels_dict = {}
 for i, dir_ in enumerate(label_names):
     labels_dict[dir_] = i
 #csv
-file = open('handlandmarks.csv','w',newline='')
+file = open('handlandmarkss.csv','w',newline='')
 writer = csv.writer(file)
 writer.writerow(["label"] + ["x_{}".format(i) for i in range(21)] + ["y_{}".format(i) for i in range(21)]) #header row w/ class labels n coordinates for x y landmarks
 

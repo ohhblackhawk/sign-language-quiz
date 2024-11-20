@@ -130,12 +130,12 @@ def signs():
     return render_template('signs.html')
 
 #caches images
-@app.route('/static/images/<letter>.gif')
+@app.route('/app/static/images/<letter>.gif')
 def send_image(letter):
     #cache timeout 1 hr
     cache_timeout = 3600
     #attaching headers, to store the sign gifs
-    response = make_response(send_file('static/images/{}.gif'.format(letter)))
+    response = make_response(send_file('/static/images/{}.gif'.format(letter)))
     response.headers['Cache-Control'] = 'max-age={}, public'.format(cache_timeout)
     return response
 
@@ -185,5 +185,5 @@ def add_word():
 
 if __name__ == '__main__':
     # app.run(debug=True)
-    socketio.run(app, host='localhost', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True, debug=True)
 

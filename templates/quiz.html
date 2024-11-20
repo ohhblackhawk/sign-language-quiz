@@ -86,7 +86,7 @@
 
                 //hides gifs for hard lvl
                 if (difficulty !== 'hard') {
-                    aslGifElement.src = `/static/images/${letter}.gif`;
+                    aslGifElement.src = `/static/images/${letter.toUpperCase()}.gif`;
                     console.log(`Updating aslGifElement.src with: /static/images/${letter}.gif`);
                     aslGifElement.alt = letter;
                     console.log(`Updating aslGifElement.alt with: ${letter}`);
@@ -129,7 +129,7 @@
         console.log(`Received initial letter: ${letter}`);
         document.getElementById('current-letter').textContent = `Current Letter: ${letter}`;
         const aslGifElement = document.getElementById('aslsign');
-        aslGifElement.src = `/static/images/${letter}.gif`;
+        aslGifElement.src = `/static/images/${letter.toUpperCase()}.gif`;
         aslGifElement.alt = letter;
     });
 </script>
